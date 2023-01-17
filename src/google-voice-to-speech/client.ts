@@ -1,3 +1,5 @@
+import { chatGPT } from "../chatgpt";
+
 const recorder = require('node-record-lpcm16');
 const speech = require('@google-cloud/speech');
 
@@ -22,42 +24,38 @@ class SpeechWrapper {
         };
     }
 
-    async createStream() {
+    async transcribe() {
         const streamData = this.client
             .streamingRecognize(this.request)
             .on('error', console.error)
-            .on('data', (data: { results: { alternatives: { transcript: any; }[]; }[]; }) =>
-                process.stdout.write(
-                    data.results[0] && data.results[0].alternatives[0]
-                        ? `Transcription: ${data.results[0].alternatives[0].transcript}\n`
-                        : '\n\nReached transcription time limit, press Ctrl+C\n'
-                )
-            );
+            .on('data', async (data: { results: { alternatives: { transcript: any; }[]; }[]; }) => {
+                if (data.results[0] && data.results[0].alternatives[0]) {
+                    const transcription = data.results[0].alternatives[0].transcript
 
-        return streamData
+                    console.log("Me : ", transcription)
+
+                    const response = await chatGPT.askGPT(transcription)
+                    console.log("ChatGpt : ", response)
+                } else {
+                    console.log("\n\nError: Reached transcription time limit, press Ctrl+C")
+                }
+            })
+
+        recorder
+            .record({
+                sampleRateHertz: this.rateHertz,
+                threshold: 0,
+                verbose: false,
+                recordProgram: 'rec',
+                silence: '10.0',
+            })
+            .stream()
+            .on('error', console.error)
+            .pipe(streamData);
+
+        console.log('Listening, press Ctrl+C to stop.');
     }
 
-    async transcribe(streamData: any) {
-        try {
-            recorder
-                .record({
-                    sampleRateHertz: this.rateHertz,
-                    threshold: 0,
-                    // Other options, see https://www.npmjs.com/package/node-record-lpcm16#options
-                    verbose: false,
-                    recordProgram: 'rec', // Try also "arecord" or "sox"
-                    silence: '10.0',
-                })
-                .stream()
-                .on('error', console.error)
-                .pipe(streamData);
-
-            console.log('Listening, press Ctrl+C to stop.');
-        } catch (error) {
-            console.error("Error transcribing ...");
-
-        }
-    }
 }
 
 export const speechWrapper = new SpeechWrapper()
