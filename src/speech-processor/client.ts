@@ -1,6 +1,7 @@
 
 import textToSpeech from "@google-cloud/text-to-speech"
-import speech from '@google-cloud/speech';
+const speech = require('@google-cloud/speech');
+
 import * as protos from "@google-cloud/text-to-speech/build/protos/protos"
 const recorder = require('node-record-lpcm16');
 
@@ -30,7 +31,7 @@ class SpeechWrapper {
 
         this.request = {
             config: {
-                encoding: this.encoding,
+                encoding: "LINEAR16",
                 sampleRateHertz: this.rateHertz,
                 languageCode: "en-US",
             },
