@@ -1,17 +1,23 @@
-import { chatGPT } from "../chatgpt";
+
 import textToSpeech from "@google-cloud/text-to-speech"
-const speech = require('@google-cloud/speech');
+import speech from '@google-cloud/speech';
 import * as protos from "@google-cloud/text-to-speech/build/protos/protos"
-const Speaker = require('speaker');
 const recorder = require('node-record-lpcm16');
 
+const { spawn } = require('child_process');
+const util = require('util');
+import fs from "fs"
+
+import { chatGPT } from "../chatgpt";
+import { utils } from "../utils/common";
 
 class SpeechWrapper {
     speechClient;
     ttsClient
-    speaker
     request;
+    encoding: any = "LINEAR"
     rateHertz = 16000
+    filepath = "transcription.mp3"
 
     constructor() {
         this.speechClient = new speech.SpeechClient({
@@ -19,24 +25,17 @@ class SpeechWrapper {
         });
 
         this.ttsClient = new textToSpeech.TextToSpeechClient({
-            keyFilename: process.env.TEXT_TO_SPEECH_KEY
+            keyFilename: "key/liz-gpt-key.json"
         });
 
         this.request = {
             config: {
-                encoding: "LINEAR16",
+                encoding: this.encoding,
                 sampleRateHertz: this.rateHertz,
                 languageCode: "en-US",
             },
             interimResults: false, // If you want interim results, set this to true
         };
-
-
-        this.speaker = new Speaker({
-            channels: 2,          // 2 channels
-            bitDepth: 16,         // 16-bit samples
-            sampleRate: 44100     // 44,100 Hz sample rate
-        });
 
     }
 
@@ -78,7 +77,7 @@ class SpeechWrapper {
             const request = {
                 input: { text: text },
                 // Select the language and SSML voice gender (optional)
-                voice: { languageCode: 'en-US', ssmlGender: protos.google.cloud.texttospeech.v1.SsmlVoiceGender.NEUTRAL },
+                voice: { languageCode: 'en-US', ssmlGender: protos.google.cloud.texttospeech.v1.SsmlVoiceGender.MALE },
                 // select the type of audio encoding
                 audioConfig: { audioEncoding: protos.google.cloud.texttospeech.v1.AudioEncoding.MP3 },
             };
@@ -86,9 +85,23 @@ class SpeechWrapper {
             // Performs the text-to-speech request
             const [response] = await this.ttsClient.synthesizeSpeech(request);
 
-            // response.audioContent!.pipe(speaker)
+            const writeFile = util.promisify(fs.writeFile);
+            writeFile(this.filepath, response.audioContent, 'binary');
 
-            this.speaker.write(response.audioContent)
+            await utils.wait(10)
+
+            if (fs.existsSync(this.filepath)) {
+                // Spawn a child process to play the mp3 file
+                const play = spawn('play', [this.filepath]);
+
+                // Log any errors
+                play.stderr.on('data', (data: any) => {
+                    console.log(`Error: ${data}`);
+                });
+            } else {
+                console.log(`Error: The file "${this.filepath}" does not exist.`);
+            }
+            console.log("Playing sound ")
 
         } catch (error) {
             console.log("Error converting text to speech ", error)

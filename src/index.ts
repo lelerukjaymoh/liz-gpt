@@ -1,4 +1,4 @@
-import { speechWrapper } from "./google-tts/client"
+import { speechWrapper } from "./speech-processor/client"
 
 const main = async () => {
     try {
