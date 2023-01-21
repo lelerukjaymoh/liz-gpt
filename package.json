@@ -19,6 +19,6 @@
   },
   "scripts": {
     "dev": "ts-node-dev -r dotenv/config src/index.ts",
-    "test": "ts-node-dev src/test/speak.ts"
+    "test": "ts-node-dev src/test/respond.ts"
   }
 }
