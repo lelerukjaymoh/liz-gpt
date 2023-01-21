@@ -19,6 +19,7 @@ class SpeechWrapper {
     encoding: any = "LINEAR"
     rateHertz = 16000
     filepath = "transcription.mp3"
+    _recorder
 
     constructor() {
         this.speechClient = new speech.SpeechClient({
@@ -38,6 +39,15 @@ class SpeechWrapper {
             interimResults: false, // If you want interim results, set this to true
         };
 
+        this._recorder = recorder
+            .record({
+                sampleRateHertz: this.rateHertz,
+                threshold: 0,
+                verbose: false,
+                recordProgram: 'rec',
+                silence: '10.0',
+            })
+
     }
 
     async transcribe() {
@@ -52,28 +62,44 @@ class SpeechWrapper {
 
                     const response = await chatGPT.askGPT(transcription)
 
+                    console.log("\n\n Pausing recording ...")
+                    this._recorder.pause()
+
+                    if (response) {
+                        await this.respond(response!)
+                    } else {
+                        await this.respond("Chat GPT delayed the response")
+                    }
+
+                    console.log("\n\n Resuming recording ...")
+
+                    this._recorder.resume()
+
                     console.log("ChatGpt : ", response)
+
                 } else {
                     console.log("\n\nError: Reached transcription time limit, press Ctrl+C")
                 }
             })
 
-        recorder
-            .record({
-                sampleRateHertz: this.rateHertz,
-                threshold: 0,
-                verbose: false,
-                recordProgram: 'rec',
-                silence: '10.0',
-            })
-            .stream()
-            .on('error', console.error)
-            .pipe(streamData);
+        this.record(streamData)
 
-        console.log('Listening, press Ctrl+C to stop.');
     }
 
-    async speak(text: string) {
+    async record(streamData: any) {
+        try {
+            this._recorder
+                .stream()
+                .on('error', console.error)
+                .pipe(streamData);
+
+            console.log('Listening, press Ctrl+C to stop.');
+        } catch (error) {
+            console.log("Error recording ", error)
+        }
+    }
+
+    async respond(text: any) {
         try {
             const request = {
                 input: { text: text },
@@ -89,7 +115,7 @@ class SpeechWrapper {
             const writeFile = util.promisify(fs.writeFile);
             writeFile(this.filepath, response.audioContent, 'binary');
 
-            await utils.wait(10)
+            await utils.wait(50)
 
             if (fs.existsSync(this.filepath)) {
                 // Spawn a child process to play the mp3 file
