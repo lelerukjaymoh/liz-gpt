@@ -1,4 +1,5 @@
 import { Configuration, OpenAIApi } from "openai"
+import { utils } from "../utils/common"
 
 class ChatGPT {
     configuration: Configuration
@@ -18,15 +19,18 @@ class ChatGPT {
                 model: "text-davinci-003",
                 prompt: prompt,
                 temperature: 0.6,
+                stream: true,
             });
 
-            return completion.data.choices[0].text
+            let parsedResponse = utils.parseGPTResponse(JSON.parse(JSON.stringify(completion.data)))
+
+            return parsedResponse
         } catch (error: any) {
 
             if (error.response) {
                 console.error("ChatGPT Error", error.response.status, error.response.data);
             } else {
-                console.error(`Error with OpenAI API request: ${error.message}`);
+                console.error(`Error with OpenAI API request: ${error.message}. For this prompt ${prompt}`);
             }
         }
     }
