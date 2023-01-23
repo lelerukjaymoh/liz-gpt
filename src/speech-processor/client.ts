@@ -36,7 +36,7 @@ class SpeechWrapper {
                 sampleRateHertz: this.rateHertz,
                 languageCode: "en-US",
             },
-            interimResults: false, // If you want interim results, set this to true
+            interimResults: false,
         };
 
     }
@@ -92,8 +92,6 @@ class SpeechWrapper {
                 .on('error', console.error)
                 .pipe(streamData);
 
-            // console.log('\n\n\n Listening, press Ctrl+C to stop.');
-
         } catch (error) {
             console.log("Error recording ", error)
         }
@@ -103,13 +101,10 @@ class SpeechWrapper {
         try {
             const request = {
                 input: { text: text },
-                // Select the language and SSML voice gender (optional)
                 voice: { languageCode: 'en-US', ssmlGender: protos.google.cloud.texttospeech.v1.SsmlVoiceGender.MALE },
-                // select the type of audio encoding
                 audioConfig: { audioEncoding: protos.google.cloud.texttospeech.v1.AudioEncoding.MP3 },
             };
 
-            // Performs the text-to-speech request
             const [response] = await this.ttsClient.synthesizeSpeech(request);
 
             const writeFile = util.promisify(fs.writeFile);
@@ -118,18 +113,14 @@ class SpeechWrapper {
             await utils.wait(50)
 
             if (fs.existsSync(this.filepath)) {
-                // Spawn a child process to play the mp3 file
                 const play = spawn('play', [this.filepath]);
 
-                // Log any errors
                 play.stderr.on('error', (data: any) => {
                     console.log(`Error: ${data}`);
                 });
             } else {
                 console.log(`Error: The file "${this.filepath}" does not exist.`);
             }
-
-            // console.log("Playing sound ")
 
         } catch (error) {
             console.log("Error converting text to speech ", error)

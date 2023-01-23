@@ -1,4 +1,4 @@
-import { speechWrapper } from "./speech-processor/client"
+import { speechWrapper } from "./speech-processor"
 
 const main = async () => {
     try {
