@@ -56,14 +56,15 @@ class SpeechWrapper {
                     const response = await chatGPT.askGPT(transcription)
 
                     if (response) {
-                        await this.respond(response!)
+                        this.respond(response!)
                     } else {
                         await this.respond("Chat GPT delayed the response")
                     }
 
                     this._recorder.resume()
 
-                    console.log("ChatGpt : ", response)
+                    console.log("\nChatGpt : ", response)
+                    console.log("\n==> Listening ... ")
 
                     this.record(streamData)
 
