@@ -23,11 +23,11 @@ class SpeechWrapper {
 
     constructor() {
         this.speechClient = new speech.SpeechClient({
-            keyFilename: process.env.GOOGLE_API
+            keyFilename: process.env.GOOGLE_API_KEY
         });
 
         this.ttsClient = new textToSpeech.TextToSpeechClient({
-            keyFilename: process.env.GOOGLE_API
+            keyFilename: process.env.GOOGLE_API_KEY
         });
 
         this.request = {

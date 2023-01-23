@@ -11,4 +11,10 @@ This enables you to have a one to one conversation as you would with virtual ass
 ## Challenges
 - Challenges affecting Chat GPT eg model not sending completion that makes sense
 
+
+## How to get started
+- Clone project
+- Install dependencies <pre>yarn install</pre>
+- Add your GOOGLE_API_KEY and OPEN_AI_API_KEY 
+- Run the project with <pre>yarn dev</pre>
    
