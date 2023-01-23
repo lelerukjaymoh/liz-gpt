@@ -19,7 +19,7 @@ class SpeechWrapper {
     encoding: any = "LINEAR"
     rateHertz = 16000
     filepath = "transcription.mp3"
-    _recorder
+    _recorder: any;
 
     constructor() {
         this.speechClient = new speech.SpeechClient({
@@ -39,15 +39,6 @@ class SpeechWrapper {
             interimResults: false, // If you want interim results, set this to true
         };
 
-        this._recorder = recorder
-            .record({
-                sampleRateHertz: this.rateHertz,
-                threshold: 0,
-                verbose: false,
-                recordProgram: 'rec',
-                silence: '10.0',
-            })
-
     }
 
     async transcribe() {
@@ -58,12 +49,11 @@ class SpeechWrapper {
                 if (data.results[0] && data.results[0].alternatives[0]) {
                     const transcription = data.results[0].alternatives[0].transcript
 
+                    this._recorder.pause()
+
                     console.log("\n\nMe : ", transcription)
 
                     const response = await chatGPT.askGPT(transcription)
-
-                    console.log("\n\n Pausing recording ...")
-                    this._recorder.pause()
 
                     if (response) {
                         await this.respond(response!)
@@ -71,11 +61,11 @@ class SpeechWrapper {
                         await this.respond("Chat GPT delayed the response")
                     }
 
-                    console.log("\n\n Resuming recording ...")
-
                     this._recorder.resume()
 
                     console.log("ChatGpt : ", response)
+
+                    this.record(streamData)
 
                 } else {
                     console.log("\n\nError: Reached transcription time limit, press Ctrl+C")
@@ -88,12 +78,21 @@ class SpeechWrapper {
 
     async record(streamData: any) {
         try {
-            this._recorder
+
+            this._recorder = recorder
+                .record({
+                    sampleRateHertz: this.rateHertz,
+                    threshold: 0,
+                    verbose: false,
+                    recordProgram: 'rec',
+                    silence: '10.0',
+                })
                 .stream()
                 .on('error', console.error)
                 .pipe(streamData);
 
-            console.log('Listening, press Ctrl+C to stop.');
+            // console.log('\n\n\n Listening, press Ctrl+C to stop.');
+
         } catch (error) {
             console.log("Error recording ", error)
         }
@@ -122,13 +121,14 @@ class SpeechWrapper {
                 const play = spawn('play', [this.filepath]);
 
                 // Log any errors
-                play.stderr.on('data', (data: any) => {
+                play.stderr.on('error', (data: any) => {
                     console.log(`Error: ${data}`);
                 });
             } else {
                 console.log(`Error: The file "${this.filepath}" does not exist.`);
             }
-            console.log("Playing sound ")
+
+            // console.log("Playing sound ")
 
         } catch (error) {
             console.log("Error converting text to speech ", error)

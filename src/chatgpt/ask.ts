@@ -19,6 +19,7 @@ class ChatGPT {
                 model: "text-davinci-003",
                 prompt: prompt,
                 temperature: 0.6,
+                max_tokens: 500,
                 stream: true,
             });
 
@@ -28,9 +29,9 @@ class ChatGPT {
         } catch (error: any) {
 
             if (error.response) {
-                console.error("ChatGPT Error", error.response.status, error.response.data);
+                console.error("\nChatGPT Error", error.response.status, error.response.data);
             } else {
-                console.error(`Error with OpenAI API request: ${error.message}. For this prompt ${prompt}`);
+                console.error(`\nError with OpenAI API request: ${error.message}. For this prompt ${prompt}`);
             }
         }
     }
