@@ -7,7 +7,7 @@ class ChatGPT {
 
     constructor() {
         this.configuration = new Configuration({
-            apiKey: process.env.OPEN_AI_API_KEY!
+            apiKey: process.env.OPEN_API_KEY!
         })
 
         this.openAi = new OpenAIApi(this.configuration)
