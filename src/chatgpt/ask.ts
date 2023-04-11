@@ -1,5 +1,6 @@
 import { Configuration, OpenAIApi } from "openai"
 import { utils } from "../utils/common"
+import fs from "fs"
 
 class ChatGPT {
     configuration: Configuration
@@ -33,6 +34,19 @@ class ChatGPT {
             } else {
                 console.error(`\nError with OpenAI API request: ${error.message}. For this prompt ${prompt}`);
             }
+        }
+    }
+
+    async whisperTranscribe() {
+        try {
+            const resp = await this.openAi.createTranscription(
+                fs.createReadStream("test.mp3") as any,
+                "whisper-1"
+            );
+
+            console.log("Transcription response ", resp.data)
+        } catch (error) {
+            console.log("Error whisper transcribing  ", error)
         }
     }
 }

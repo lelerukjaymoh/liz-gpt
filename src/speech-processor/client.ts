@@ -9,7 +9,6 @@ const { spawn } = require('child_process');
 const util = require('util');
 import fs from "fs"
 
-import { chatGPT } from "../chatgpt";
 import { utils } from "../utils/common";
 
 class SpeechWrapper {
@@ -42,55 +41,29 @@ class SpeechWrapper {
     }
 
     async transcribe() {
-        const streamData = this.speechClient
-            .streamingRecognize(this.request)
-            .on('error', console.error)
-            .on('data', async (data: { results: { alternatives: { transcript: any; }[]; }[]; }) => {
-                if (data.results[0] && data.results[0].alternatives[0]) {
-                    const transcription = data.results[0].alternatives[0].transcript
-
-                    this._recorder.pause()
-
-                    console.log("\n\nMe : ", transcription)
-
-                    const response = await chatGPT.askGPT(transcription)
-
-                    if (response) {
-                        this.respond(response!)
-                    } else {
-                        await this.respond("Chat GPT delayed the response")
-                    }
-
-                    this._recorder.resume()
-
-                    console.log("\nChatGpt : ", response)
-                    console.log("\n==> Listening ... ")
-
-                    this.record(streamData)
-
-                } else {
-                    console.log("\n\nError: Reached transcription time limit, press Ctrl+C")
-                }
-            })
-
-        this.record(streamData)
-
-    }
-
-    async record(streamData: any) {
         try {
 
-            this._recorder = recorder
-                .record({
-                    sampleRateHertz: this.rateHertz,
-                    threshold: 0,
-                    verbose: false,
-                    recordProgram: 'rec',
-                    silence: '10.0',
-                })
-                .stream()
-                .on('error', console.error)
-                .pipe(streamData);
+        } catch (error) {
+            console.log("Error transcribing ", error)
+        }
+    }
+
+    record() {
+        try {
+
+            const file = fs.createWriteStream('test.mp3', { encoding: 'binary' })
+
+            const recording = recorder.record({
+                sampleRate: 44100,
+                silence: '3.0',
+            })
+            recording.stream().pipe(file)
+
+            // Stop recording after three seconds
+            // setTimeout(() => {
+            //     console.log("Stopping ")
+            //     recording.stop()
+            // }, 1000)
 
         } catch (error) {
             console.log("Error recording ", error)
